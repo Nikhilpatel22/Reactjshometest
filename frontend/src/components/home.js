@@ -23,7 +23,7 @@ const Submit = () =>{
 }
     return (
         <div>
-            <h5>Home page</h5>
+            <h5>User form</h5>
             <Form.Control type="text" placeholder="First Name" name="fname" onChange={(e)=>handleChange(e)}/>
             <Form.Control type="text" placeholder="Last Name" name="lname" onChange={(e)=>handleChange(e)}/>
             <Button onClick={Submit}>Submit</Button>
