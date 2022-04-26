@@ -1,20 +1,20 @@
 const express = require("express");
 const app = express();
+const bcrypt = require('bcrypt');
 const User = require("./model/User");
-var bodyParser = require('body-parser');
-
+const bodyParser = require('body-parser');
+const jwt = require("jsonwebtoken")
+const cors = require('cors');
 require("./database/conn")
 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-
-
+app.use(cors());
 
 app.get("/", (req, res) => {
     res.send("nikhil")
-
 })
 
 app.get("/getuser", async (req, res) => {
@@ -36,44 +36,101 @@ app.get("/data/:id", async (req, res) => {
     }
 })
 
-
-app.put("/:id", async(req,res)=>{
-    // const id = req.params.id;
-    // let user = await User.findById(req.params.id)
-    // user = req.body;
-    // const editUser = new User(user)
-    // try{
-    //     const data = await User.updateOne({_id : req.params.id},editUser)
-    //     res.status(200).json(data)
-    // }catch(err){
-    //     res.json(err)
-    // }
-    let user = await User.findById(req.params.id);
-    user = req.body;
-
-    const editUser = new User(user);
-    try{
-        await User.updateOne({_id: req.params.id}, editUser);
-        res.status(201).json(editUser);
-    } catch (error){
-        res.status(409).json(error);     
-    }
-
-})
-
 app.post("/add", (req, res) => {
     //  var {name,email} = req.body;
 
+    bcrypt.hash(req.body.password,10,(err,hash)=>{
+
+        const user = new User({
+            name: req.body.name,
+            email: req.body.email,
+            password : hash
+        })
+    
+        const token = jwt.sign(
+            { _id: user._id},
+            'this is dummy text',
+            {
+                expiresIn: "2h",
+            }
+        );
+        console.log(token)
+         res.cookie(token)
+        // user.token = token;
+        user.save().then(() => {
+            res.status(200).json({user:user,token : token})
+        })
+    
+            .catch((err) => {
+                res.status(400).json(err)
+            })
+
+    })    
+})
+
+app.put("/edit/:id", async (req, res) => {
     const user = new User({
+        _id: req.params.id,
         name: req.body.name,
         email: req.body.email
+       
     })
-    user.save().then(() => {
-        res.status(200).json(user)
-    })
+    User.updateOne({ _id: req.params.id }, user)
+        .then(() => {
+            res.status(200).json(user)
+        })
         .catch((err) => {
             res.status(400).json(err)
         })
 })
+
+
+
+
+app.delete("/delete/:id", (req, res) => {
+    User.deleteOne({ _id: req.params.id })
+        .then(() => {
+            res.status(200).json({
+                message: 'Deleted!'
+            })
+        })
+        .catch((err) => {
+            res.status(401).json(err)
+        })
+})
+
+
+app.post("/login", async (req, res) => {
+    try{
+    const email = req.body.email;
+    
+    const password = req.body.password;
+
+    const useremail = await User.findOne({ email: email })
+    
+    // const ismatch = (password === useremail.password);
+
+    const match = await bcrypt.compare(password, useremail.password);
+
+    if(match) {
+         const token = jwt.sign({_id:useremail._id},
+            'this is dummy text',
+            {
+                expiresIn: "2h",
+            }
+            )   
+            res.cookie(token)
+        res.status(200).json({user : useremail,token:token})
+    } else {
+        res.json({
+            message: 'dont match!'
+        })
+    }
+}catch(err){
+    res.status(401).json(err)
+}
+})
+
+
 
 module.exports = app;
