@@ -4,12 +4,17 @@ const bcrypt = require('bcrypt');
 const User = require("./model/User");
 const bodyParser = require('body-parser');
 const jwt = require("jsonwebtoken")
+const multer = require('multer');
+const path = require('path');
 const cors = require('cors');
 require("./database/conn")
 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+
+app.use(express.static(__dirname + "./public/"));
 
 app.use(cors());
 
@@ -36,36 +41,51 @@ app.get("/data/:id", async (req, res) => {
     }
 })
 
-app.post("/add", (req, res) => {
+
+var storage = multer.diskStorage({
+    destination: './public/upload/',
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+var upload = multer({
+    storage: storage
+}).single('file');
+
+
+
+app.post("/add", upload,(req, res) => {
     //  var {name,email} = req.body;
 
-    bcrypt.hash(req.body.password,10,(err,hash)=>{
+    bcrypt.hash(req.body.password, 10, (err, hash) => {
 
         const user = new User({
             name: req.body.name,
             email: req.body.email,
-            password : hash
+            password: hash,
+            file: req.file.filename
         })
-    
+
         const token = jwt.sign(
-            { _id: user._id},
+            { _id: user._id },
             'this is dummy text',
             {
                 expiresIn: "2h",
             }
         );
         console.log(token)
-         res.cookie(token)
+        res.cookie(token)
         // user.token = token;
         user.save().then(() => {
-            res.status(200).json({user:user,token : token})
+            res.status(200).json({ user: user, token: token })
         })
-    
+
             .catch((err) => {
                 res.status(400).json(err)
             })
 
-    })    
+    })
 })
 
 app.put("/edit/:id", async (req, res) => {
@@ -73,7 +93,7 @@ app.put("/edit/:id", async (req, res) => {
         _id: req.params.id,
         name: req.body.name,
         email: req.body.email
-       
+
     })
     User.updateOne({ _id: req.params.id }, user)
         .then(() => {
@@ -101,34 +121,34 @@ app.delete("/delete/:id", (req, res) => {
 
 
 app.post("/login", async (req, res) => {
-    try{
-    const email = req.body.email;
-    
-    const password = req.body.password;
+    try {
+        const email = req.body.email;
 
-    const useremail = await User.findOne({ email: email })
-    
-    // const ismatch = (password === useremail.password);
+        const password = req.body.password;
 
-    const match = await bcrypt.compare(password, useremail.password);
+        const useremail = await User.findOne({ email: email })
 
-    if(match) {
-         const token = jwt.sign({_id:useremail._id},
-            'this is dummy text',
-            {
-                expiresIn: "2h",
-            }
-            )   
+        // const ismatch = (password === useremail.password);
+
+        const match = await bcrypt.compare(password, useremail.password);
+
+        if (match) {
+            const token = jwt.sign({ _id: useremail._id },
+                'this is dummy text',
+                {
+                    expiresIn: "2h",
+                }
+            )
             res.cookie(token)
-        res.status(200).json({user : useremail,token:token})
-    } else {
-        res.json({
-            message: 'dont match!'
-        })
+            res.status(200).json({ user: useremail, token: token })
+        } else {
+            res.json({
+                message: 'dont match!'
+            })
+        }
+    } catch (err) {
+        res.status(401).json(err)
     }
-}catch(err){
-    res.status(401).json(err)
-}
 })
 
 
