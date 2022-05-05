@@ -26,7 +26,10 @@ const Register = () => {
     data.append('password', user.password);
     data.append('file', file);
 
-
+    for (const key of Object.keys(file)) {
+      data.append('file', file[key])
+  }
+  console.log("filllle",file)
     // let item = {email,password};
     const result = await fetch("http://localhost:8080/add", {
       method: 'POST',
@@ -53,7 +56,7 @@ const Register = () => {
       <br />
       <input type="text" name="password" placeholder='Passwrod' onChange={(e) => handleSubmit(e)} />
       <br />
-      <input type="file" name="file" onChange={(e) => setFile(e.target.files[0])} />
+      <input type="file" name="file" onChange={(e) => setFile(e.target.files)} multiple />
       <Button onClick={Signup}>submit</Button>
     </div>
   )

@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken")
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
+const auth = require('./middleware/auth')
 require("./database/conn")
 
 
@@ -22,7 +23,7 @@ app.get("/", (req, res) => {
     res.send("nikhil")
 })
 
-app.get("/getuser", async (req, res) => {
+app.get("/getuser",auth,async (req, res) => {
     try {
         const user = await User.find();
         res.status(200).json(user)
@@ -50,12 +51,12 @@ var storage = multer.diskStorage({
 });
 
 var upload = multer({
-    storage: storage
-}).single('file');
+    storage: storage    
+    // limits : {fileSize : 1000000}
+})
 
 
-
-app.post("/add", upload,(req, res) => {
+app.post("/add",upload.array("file",5),(req, res,err) => {
     //  var {name,email} = req.body;
 
     bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -64,14 +65,27 @@ app.post("/add", upload,(req, res) => {
             name: req.body.name,
             email: req.body.email,
             password: hash,
-            file: req.file.filename
+            // file: req.file.filename
         })
+        // if(req.file){
+        //     user.file = req.file.filename   
+        // }
+
+        if(req.files){
+            let path = ""
+            req.files.forEach(function(files,index,arr){
+                path = path + files.filename + ','
+            })
+            path = path.substring(0,path.lastIndexOf(","))
+            user.file = path
+        }
+
 
         const token = jwt.sign(
             { _id: user._id },
             'this is dummy text',
             {
-                expiresIn: "2h",
+                expiresIn: "120s",
             }
         );
         console.log(token)
@@ -136,7 +150,7 @@ app.post("/login", async (req, res) => {
             const token = jwt.sign({ _id: useremail._id },
                 'this is dummy text',
                 {
-                    expiresIn: "2h",
+                    expiresIn: "120s",
                 }
             )
             res.cookie(token)
