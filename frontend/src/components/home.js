@@ -11,13 +11,10 @@ const handleChange = (e) =>{
     setData({...data,[e.target.name]:e.target.value})
 }
 
-
 const Submit = () =>{
-
     list.push(data)
     setList([...list])
     console.log(list)
-
     setData(data)
     console.log(data)
 }
