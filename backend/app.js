@@ -24,7 +24,7 @@ app.get("/", (req, res) => {
     res.send("nikhil")
 })
 
-app.get("/getuser",auth,async (req, res) => {
+app.get("/getuser",async (req, res) => {
     try {
         const user = await User.find();
         res.status(200).json(user)

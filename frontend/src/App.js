@@ -18,6 +18,7 @@ import Moviehome from './movie/Moviehome';
 import MovieDetails from './movie/MovieDetails';
 import MovieNavbar from './movie/MovieNavbar';
 import Example4 from './Example/Example4';
+import VarLetConstEx from './Example/VarLetConstEx';
 
 // const ENDPOINT = "http://localhost:8080/";
 // const socket=socketIO(ENDPOINT,{transports:['websocket']})
@@ -44,6 +45,7 @@ function App() {
           <Route path='/moviehome' element={<Moviehome/>}></Route>
           <Route path='/example4' element={<Example4/>}></Route>
           <Route path='/moviedetails/:movieId' element={<MovieDetails/>}></Route>
+          <Route path='/example/varletconst' element={<VarLetConstEx />}></Route>
         </Routes>
       </BrowserRouter>
       {/* <Globleinfo.Provider value={{ appcolor: color }}>

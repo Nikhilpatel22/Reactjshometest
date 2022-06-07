@@ -8,6 +8,8 @@ const Example = () => {
         // e.preventdefault()
         setNumber(e.target.value)
 
+        console.log("this",this)
+
          if(number % 3 === 0){
              console.log("disision by 3")
          }
